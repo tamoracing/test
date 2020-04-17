@@ -18,10 +18,12 @@ var AUTHOR_CONTAINER_JSNAME = "Ne3sFf";
 var TEXT_TO_REPLY_ELEMENT = "bgckF";
 
 function init() {
+	console.log("Adding reply button...");
 	let actionContainers = getMessageActionsContainers();
 	actionContainers.forEach(addReplyActionToActionContainer);
 	addChangeConversationListener();
 	addNewMessagesListener();
+	console.log("Done :) ");
 }
 
 function getMessageActionsContainers() {
