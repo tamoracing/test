@@ -105,8 +105,8 @@ function getTextParentContainer(replyContainer) {
 }
 
 function replaceAnchorLink(htmlMarkup) {
-	let urlPattern = /([^+>]*)[^<]*(<a [^>]*href="([^>^\"]*")[^>]*>)([^<]+)(<\/a>)/gi;
-	return htmlMarkup.replace(urlPattern, "$1$4");
+	let urlPattern = /(<a [^>]*href="([^>^\"]*)"[^>]*>)([^<]+)(<\/a>)/gi;
+	return htmlMarkup.replace(urlPattern, "$2");
 }
 
 function replaceSpanTag(htmlMarkup) {
@@ -115,11 +115,8 @@ function replaceSpanTag(htmlMarkup) {
 }
 
 function replaceFormatTags(htmlMarkup) {
-	let mapObj = {"<b>":"*","</b>":"*","<i>":"_","</i>":"_","<s>":"~","</s>":"~", "`": ""};
-	let re = new RegExp(Object.keys(mapObj).join("|"),"gi");
-	scapedHtml = htmlMarkup.replace(re, function(matched){
-  		return mapObj[matched];
-	});	
+	let boldItalicStrikeRegex = /(<[bis]>|<\/[bis]>|\`)/gi;
+	let scapedHtml = htmlMarkup.replace(boldItalicStrikeRegex, "");
 	scapedHtml = replaceSpanTag(replaceAnchorLink(scapedHtml));
 
 	return scapedHtml;
