@@ -1,5 +1,5 @@
 javascript:
-
+var scriptV = "v1.0.0";
 var ACTION_CLASS_1 = "mUbCce";
 var ACTION_CLASS_2 = "orLAid";
 var CUSTOM_CLASS = "reply-container";
@@ -23,7 +23,7 @@ function init() {
 	actionContainers.forEach(addReplyActionToActionContainer);
 	addChangeConversationListener();
 	addNewMessagesListener();
-	console.log("Done :) ");
+	console.log(`Done :) ${scriptV}`);
 }
 
 function getMessageActionsContainers() {
