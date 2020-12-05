@@ -38,9 +38,11 @@ function getMessageActionsContainers() {
 }
 
 function addReplyActionToActionContainer(actionContainer) {
-	let replyActionContainer = createReplyActionContainer();
-	addReplyClickHandler(replyActionContainer);
-	actionContainer.insertBefore(replyActionContainer, actionContainer.firstChild);
+	if (!!!actionContainer.querySelector('.' + CUSTOM_CLASS)) {
+		let replyActionContainer = createReplyActionContainer();
+		addReplyClickHandler(replyActionContainer);
+		actionContainer.insertBefore(replyActionContainer, actionContainer.firstChild);
+	}
 }
 
 function createReplyActionContainer() {
