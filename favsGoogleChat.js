@@ -18,6 +18,26 @@ var AUTHOR_CONTAINER_JSNAME = "Ne3sFf";
 var TEXT_TO_REPLY_ELEMENT = "bgckF";
 var MSG_DATE_JSNAME = 'E53oB';
 var favIcon = createFavIcon();
+var buttonStyle = `
+	margin-left: 5px;
+	background-color: white;
+	border: 1px solid rgb(218, 220, 224);
+	border-radius: 15px;
+	font-family: "Google Sans", Arial, sans-serif;
+	color: rgb(60, 64, 67);
+	font-size: 14px;
+	line-height: 1.25rem;
+	letter-spacing: 0.25px;
+`;
+var favMsgContainerStyle = `
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	margin-top: 10px;
+	padding: 10px;
+	background-color: #e4f7fb;
+	align-items: center;
+`;
 
 function initFav() {
 	let actionContainers = getMessageActionsContainers();
@@ -59,10 +79,10 @@ function createFavActionContainer() {
 	iconContainer.setAttribute("data-tooltip", "Agregar a favoritos");
 	let iconSpan = document.createElement('span');
 	iconSpan.classList.add(ICON_SPAN_1_CLASS);
-	let icon2Span = document.createElement('span');
-	icon2Span.style = "top: -10px";
-	icon2Span.appendChild(createFavIcon());
-	iconSpan.appendChild(icon2Span);
+	let favIconSpan = document.createElement('span');
+	favIconSpan.style = "top: -10px";
+	favIconSpan.appendChild(createFavIcon());
+	iconSpan.appendChild(favIconSpan);
 	iconContainer.appendChild(iconSpan);
 	actionContainer.appendChild(iconContainer);
 	return actionContainer;
@@ -94,7 +114,6 @@ function replaceFormatTags(htmlMarkup) {
 	let boldItalicStrikeRegex = /(<[bis]>|<\/[bis]>|\`)/gi;
 	let scapedHtml = htmlMarkup.replace(boldItalicStrikeRegex, "");
 	scapedHtml = replaceSpanTag(replaceAnchorLink(scapedHtml));
-
 	return scapedHtml;
 }
 
@@ -166,8 +185,12 @@ function addFavClickHandler(favContainer) {
 		let quotedText = getTextToSaveAsFav(favContainer);
         let author = getTextAuthor(favContainer);
 		let datetime = getTextDate(favContainer);
-		let msgToSave = `${author} ${datetime}: ${quotedText}`;
-		addFavMsg(msgToSave);
+		let msgObject = {
+			"author": author,
+			"datetime": datetime,
+			"quotedText": quotedText,
+		};
+		addFavMsg(msgObject);
     };
 }
 
@@ -179,10 +202,10 @@ function saveFavStorage(favMsgs) {
 	localStorage.setItem('favMsgs', JSON.stringify(favMsgs));
 }
 
-function addFavMsg(msg) {
+function addFavMsg(msgObject) {
 	let roomId = getCurrentRoomId();
 	let favMsgs = getFavStorage();
-	favMsgs[roomId] ? favMsgs[roomId].push(msg) : favMsgs[roomId] = [msg];
+	favMsgs[roomId] ? favMsgs[roomId].push(msgObject) : favMsgs[roomId] = [msgObject];
     saveFavStorage(favMsgs);
 }
 
@@ -205,7 +228,11 @@ function getCurrentRoomId() {
 // returns current saved msgs or []
 function getFavsForRoom(roomId) {
 	let favMsgs = getFavStorage();
-	return favMsgs[roomId] || [];
+	return favMsgs[roomId].sort(sortByDate) || [];
+}
+
+function sortByDate(msgA, msgB) {
+	return new Date(msgB.datetime) - new Date(msgA.datetime);
 }
 
 initFav();
@@ -234,7 +261,7 @@ function styleOverlay() {
   contentContainer.style.backgroundColor = 'white'; 
   contentContainer.style.width = '55%'; 
   contentContainer.style.maxHeight = '50%';
-  contentContainer.style.overflowY = 'scroll';
+  contentContainer.style.overflow = 'hidden';
   contentContainer.style.borderRadius = '20px';
 }
 
@@ -255,7 +282,7 @@ function createFavMsgContainer() {
 	let closeButton = document.createElement('button');
 	closeButton.textContent = 'Cerrar';
 	closeButton.id = 'modal-close-btn';
-	
+	closeButton.style = buttonStyle;
 	closeButton.onclick = toogleModal;
 	addFavMsgToContainer(modalContainer);
 	modalContainer.appendChild(closeButton);
@@ -279,37 +306,26 @@ function addFavMsgToContainer(container) {
 	display: flex;
     flex-direction: column;
     margin-bottom: 20px;
-    padding: 5px 0px;
+    padding: 10px 0px;
     border: 2px solid #ccc;
-    border-radius: 15px;
+	border-radius: 15px;
+	max-height: 35vh;
+	overflow-y: scroll;
 	`;
     let roomFavMsgs = getFavsForRoom(getCurrentRoomId());
     if (roomFavMsgs.length === 0) {
         let msgContainer = document.createElement('div');
-        msgContainer.style = `
-		display: flex;
-    	flex-direction: row;
-    	justify-content: space-between;
-		margin-top: 10px;
-		padding: 10px;
-		background-color: #e4f7fb;
-		`;
-        msgContainer.innerText = 'Aún no hay mensajes destacados en esta sala.'
+        msgContainer.style = favMsgContainerStyle;
+        msgContainer.innerHTML = '<i><b>Aún no hay mensajes destacados en esta sala.</b></i>'
         msgList.appendChild(msgContainer);
     }
 	roomFavMsgs.forEach((msg, index) => {
 		let msgContainer = document.createElement('div');
-		msgContainer.style = `
-		display: flex;
-    	flex-direction: row;
-    	justify-content: space-between;
-		margin-top: 10px;
-		padding: 10px;
-		background-color: #e4f7fb;
-		`;
+		msgContainer.style = favMsgContainerStyle;
 		let spanMsg = document.createElement('span');
 		let actionsContainer = document.createElement('div');
 		let removeButton = document.createElement('button');
+		removeButton.style = buttonStyle;
 		removeButton.textContent = 'Quitar';
 		removeButton.onclick = () => {
 			roomFavMsgs[index] = null;
@@ -317,7 +333,7 @@ function addFavMsgToContainer(container) {
 			msgContainer.remove();
 		}
 		actionsContainer.appendChild(removeButton);
-		spanMsg.innerText = msg;
+		spanMsg.innerHTML = `<b><i>${msg.author} ${msg.datetime}:</i></b><br>${msg.quotedText}`;
 		msgContainer.appendChild(spanMsg);
 		msgContainer.appendChild(actionsContainer);
 		msgList.appendChild(msgContainer);
