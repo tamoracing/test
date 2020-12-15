@@ -17,13 +17,45 @@ var TEXT_PLACEHOLDER_HIDE_CLASS = "qs41qe";
 var AUTHOR_CONTAINER_JSNAME = "Ne3sFf";
 var TEXT_TO_REPLY_ELEMENT = "bgckF";
 var MSG_DATE_JSNAME = 'E53oB';
-var buttonStyle = `
-	margin-left: 5px;
-	background-color: white;
-	border: 1px solid rgb(218, 220, 224);
-	border-radius: 15px;
+var favContainerStyle = `
 	font-family: "Google Sans", Arial, sans-serif;
 	color: rgb(60, 64, 67);
+	font-size: 14px;
+	line-height: 1.25rem;
+	letter-spacing: 0.25px;
+	padding: 8px;
+	position: absolute;
+	right: 90px;
+	top: 100%;
+	background-color: white;
+	border: 1px solid rgb(218, 220, 224);
+	border-radius: 0px 0px 15px 15px;
+	display: flex;
+	align-items: center;
+`;
+var favMsgStyle = `
+	cursor: pointer;
+	display: flex;
+    align-items: center;
+`;
+var msgListStyle = `
+	font-family: "Google Sans", Arial, sans-serif;
+	color: rgb(60, 64, 67);
+	font-size: 14px;
+	line-height: 1.25rem;
+	letter-spacing: 0.25px;
+	text-align: left;
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 20px;
+	padding: 10px 0px;
+	border: 2px solid #ccc;
+	border-radius: 15px;
+	max-height: 35vh;
+	overflow-y: scroll;
+`;
+var buttonStyle = `
+	font-family: "Google Sans", Arial, sans-serif;
 	font-size: 14px;
 	line-height: 1.25rem;
 	letter-spacing: 0.25px;
@@ -36,6 +68,12 @@ var favMsgContainerStyle = `
 	padding: 10px;
 	background-color: #e4f7fb;
 	align-items: center;
+`;
+
+var settingsContainerStyle = `
+	display: flex;
+	margin-left: 15px;
+	cursor:pointer;
 `;
 
 ///// MODAL //////
@@ -66,10 +104,10 @@ function styleOverlay() {
   contentContainer.style.borderRadius = '20px';
 }
 
-function displayOverlay() {
+function displayOverlay(isSettingsView) {
   if(displayBool) {
 	overlayDiv.innerHTML = ``;
-	overlayDiv.appendChild(createFavMsgContainer());
+	overlayDiv.appendChild(createFavMsgContainer(isSettingsView));
 	styleOverlay();
     overlayDiv.style.display = 'block';
   } else {
@@ -77,42 +115,96 @@ function displayOverlay() {
     }
 }
 
-function createFavMsgContainer() {
+function createFavMsgContainer(isSettingsView) {
 	let modalContainer = document.createElement('div');
 	modalContainer.id = 'container';
 	let closeButton = document.createElement('button');
 	closeButton.textContent = 'Cerrar';
 	closeButton.id = 'modal-close-btn';
 	closeButton.style = buttonStyle;
-	closeButton.onclick = toogleModal;
-	addFavMsgToContainer(modalContainer);
-	modalContainer.appendChild(closeButton);
+	closeButton.onclick = () => toogleModal();
+	if (isSettingsView) {
+		modalContainer.appendChild(createFavMsgSettingsContainer());
+	} else {
+		addFavMsgToContainer(modalContainer);
+	}
+	let actionsContainer = document.createElement('div');
+	actionsContainer.appendChild(closeButton);
+	modalContainer.appendChild(actionsContainer);
 	return modalContainer;
 }
 
-function toogleModal(event) {
+function createFavMsgSettingsContainer() {
+	let importFileContainer;
+	// Check for the various File API support.
+	if (window.File && window.FileReader && window.FileList && window.Blob) {
+		importFileContainer = createImportFileButton();
+    //document.getElementById('import_fav_msgs').addEventListener('change', onChange);
+	} else {
+		importFileContainer = document.createElement('div');
+		importFileContainer.innerText = 'El browser no soporta la API para cargar archivos';
+	}
+	return importFileContainer;
+}
+
+function createFavSettingsButtonContainer() {
+	let settingsContainer = document.createElement('div');
+	settingsContainer.appendChild(createFavSettingsButton());
+	settingsContainer.onclick = () => toogleModal(true);
+	settingsContainer.style = settingsContainerStyle;
+	// TODO onchange abrir el modal y mostrar el import file
+
+	return settingsContainer;
+}
+
+function createFavSettingsButton() {
+	let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+	svg.setAttribute("viewBox", "0 0 24 24");
+	let path_1 = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+	path_1.setAttribute("d", "M13.9,22.5h-3.7c-0.7,0-1.4-0.5-1.4-1.3l-0.3-1.9c-0.3-0.1-0.5-0.3-0.8-0.5l-1.8,0.7c-0.7,0.3-1.5,0-1.8-0.6  l-1.8-3.2c-0.4-0.7-0.2-1.4,0.4-1.9l1.5-1.2c0-0.1,0-0.3,0-0.5c0-0.1,0-0.3,0-0.5l-1.5-1.2C2,10.1,1.8,9.3,2.2,8.7l1.8-3.2  c0.3-0.6,1.1-0.9,1.8-0.6l1.8,0.7c0.3-0.2,0.5-0.3,0.8-0.5l0.3-1.9C8.8,2.5,9.4,2,10.1,2h3.7c0.7,0,1.4,0.5,1.4,1.3l0.3,1.9  c0.3,0.1,0.5,0.3,0.8,0.5l1.8-0.7c0.7-0.3,1.5,0,1.8,0.7l1.8,3.2c0.4,0.7,0.2,1.4-0.4,1.9l-1.5,1.2c0,0.1,0,0.3,0,0.5s0,0.3,0,0.5  l1.5,1.2c0.6,0.4,0.7,1.2,0.4,1.9L20,19c-0.3,0.6-1.1,0.9-1.8,0.6l-1.8-0.7c-0.3,0.2-0.5,0.3-0.8,0.5l-0.3,1.9  C15.2,22,14.6,22.5,13.9,22.5z M13.3,21L13.3,21L13.3,21z M10.7,20.9L10.7,20.9C10.7,21,10.7,21,10.7,20.9z M10.6,20.5h2.8l0.4-2.5  l0.5-0.2c0.4-0.2,0.9-0.4,1.3-0.8l0.4-0.3l2.4,1l1.4-2.4l-2-1.6l0.1-0.6c0-0.3,0.1-0.5,0.1-0.8c0-0.3,0-0.5-0.1-0.8l-0.1-0.6l2-1.6  l-1.4-2.4l-2.4,1l-0.4-0.3c-0.4-0.3-0.9-0.6-1.3-0.8l-0.5-0.2L13.4,4h-2.8l-0.4,2.5L9.7,6.8C9.3,6.9,8.8,7.2,8.4,7.5L7.9,7.9  L5.6,6.9L4.2,9.3l2,1.6l-0.1,0.6c0,0.3-0.1,0.5-0.1,0.8s0,0.5,0.1,0.8l0.1,0.6l-2,1.6l1.4,2.4l2.4-1L8.4,17c0.4,0.3,0.9,0.6,1.3,0.8  l0.5,0.2L10.6,20.5z M18.2,18C18.2,18,18.2,18,18.2,18L18.2,18z M5.8,18L5.8,18C5.8,18,5.8,18,5.8,18z M18.2,6.5  C18.2,6.5,18.2,6.5,18.2,6.5L18.2,6.5z M5.8,6.5L5.8,6.5C5.8,6.5,5.8,6.5,5.8,6.5z M13.3,3.5L13.3,3.5L13.3,3.5z M12,8.7  c-1.3,0-2.4,0.7-3,1.8c-0.6,1.1-0.6,2.4,0,3.5c0.6,1.1,1.8,1.8,3,1.8c1.9,0,3.5-1.6,3.5-3.5S13.9,8.7,12,8.7z"); //Set path's data
+	path_1.setAttribute("stroke", "#5f6368");
+	path_1.setAttribute("stroke-width", "0.5");
+	svg.appendChild(path_1);
+	svg.classList.add(ICON_SVG_CLASS);
+	return svg;
+}
+
+function createImportFileButton() {
+	let buttonContainer = document.createElement('div');
+	buttonContainer.style = `
+		display: flex;
+		flew-direction: column;
+	`;
+	let inputFile = document.createElement('input');
+	inputFile.type = 'file';
+	inputFile.textContent = 'Importar archivo'
+	inputFile.classList.add('import-button');
+	inputFile.id = 'file-upload';
+	inputFile.onchange = (event) => {
+		var reader = new FileReader();
+		reader.onload = importFavMsgs;
+		reader.readAsText(event.target.files[0]);
+	};
+	
+	let labelFile = document.createElement('label');
+	labelFile.setAttribute('for', 'file-upload');
+	labelFile.id = 'import_fav_msgs';
+	labelFile.textContent = 'Para restaurar una copia de los mensajes destacados, tenés que importar el archivo json';
+	labelFile.style = buttonStyle;
+
+	buttonContainer.appendChild(labelFile);
+	buttonContainer.appendChild(inputFile);
+	return buttonContainer;
+}
+
+function toogleModal(isSettingsView) {
   	displayBool = !displayBool;
-   	displayOverlay();
+   	displayOverlay(isSettingsView);
 }
 
 function addFavMsgToContainer(container) {
 	let msgList = document.createElement('div');
-	msgList.style = `
-	font-family: "Google Sans", Arial, sans-serif;
-    color: rgb(60, 64, 67);
-    font-size: 14px;
-    line-height: 1.25rem;
-    letter-spacing: 0.25px;
-	text-align: left;
-	display: flex;
-    flex-direction: column;
-    margin-bottom: 20px;
-    padding: 10px 0px;
-    border: 2px solid #ccc;
-	border-radius: 15px;
-	max-height: 35vh;
-	overflow-y: scroll;
-	`;
+	msgList.style = msgListStyle;
     let roomFavMsgs = getFavsForRoom(getCurrentRoomId());
     if (roomFavMsgs.length === 0) {
         let msgContainer = document.createElement('div');
@@ -147,29 +239,24 @@ function addFavMsgToContainer(container) {
 
 //// Button
 function createFavButton() {
-	showFavMsgsButton = document.createElement("div");
+	let container = document.createElement('div');
+	container.style = favContainerStyle;
+
+	let showFavMsgsButton = document.createElement("div");
     showFavMsgsButton.id = "fav-msg-button";
-	showFavMsgsButton.style = `
-	font-family: "Google Sans", Arial, sans-serif;
-    color: rgb(60, 64, 67);
-    font-size: 14px;
-    line-height: 1.25rem;
-    letter-spacing: 0.25px;
-    padding: 8px;
-    position: absolute;
-    right: 90px;
-    top: 100%;
-    background-color: white;
-    border: 1px solid rgb(218, 220, 224);
-    border-radius: 0px 0px 15px 15px;
-	cursor: pointer;
-	display: flex;
-	align-items: center;`;
+	showFavMsgsButton.style = favMsgStyle;
 	showFavMsgsButton.innerHTML = "Destacados";
-	showFavMsgsButton.onclick = toogleModal;
+	showFavMsgsButton.onclick = () => toogleModal();
 	showFavMsgsButton.appendChild(createFavActionContainer());
+
+	let favButtonsContainer = document.createElement('div');
+	favButtonsContainer.appendChild(showFavMsgsButton);
+
+	container.appendChild(favButtonsContainer);
+	container.appendChild(createFavSettingsButtonContainer());
+
     let banners = document.querySelectorAll("[role=banner]");
-    banners[banners.length - 1].appendChild(showFavMsgsButton);
+    banners[banners.length - 1].appendChild(container);
 }
 /////
 
@@ -388,3 +475,93 @@ function sortByDate(a, b) {
 
 initFav();
 
+////////google integration////////////
+
+/// Crear archivo
+function insertFile(favStorageString, callback) {
+	const boundary = '-------314159265358979323846';
+	const delimiter = "\r\n--" + boundary + "\r\n";
+	const close_delim = "\r\n--" + boundary + "--";
+	var contentType = 'application/json';
+	var metadata = {
+	'title': 'testFavStorage.json',
+	'mimeType': contentType
+	};
+
+	var base64Data = btoa(unescape(encodeURIComponent(favStorageString)));
+	var multipartRequestBody =
+		delimiter +
+		'Content-Type: application/json\r\n\r\n' +
+		JSON.stringify(metadata) +
+		delimiter +
+		'Content-Type: ' + contentType + '\r\n' +
+		'Content-Transfer-Encoding: base64\r\n' +
+		'\r\n' +
+		base64Data +
+		close_delim;
+
+	var request = gapi.client.request({
+		'path': '/upload/drive/v2/files',
+		'method': 'POST',
+		'params': {'uploadType': 'multipart'},
+		'headers': {
+		'Content-Type': 'multipart/mixed; boundary="' + boundary + '"'
+		},
+		'body': multipartRequestBody});
+	if (!callback) {
+		callback = function(file) {
+			console.log(file)
+		};
+	}
+	request.execute(callback);
+}
+
+/**
+ * Update an existing file's metadata and content.
+ *
+ * @param {String} fileId ID of the file to update.
+ * @param {Function} callback Callback function to call when the request is complete.
+ */
+function updateFile(fileId, favStorageString, callback) {
+	const boundary = '-------314159265358979323846';
+	const delimiter = "\r\n--" + boundary + "\r\n";
+	const close_delim = "\r\n--" + boundary + "--";
+  
+	var contentType = 'application/json';
+	// Updating the metadata is optional and you can instead use the value from drive.files.get.
+	var base64Data = btoa(unescape(encodeURIComponent(favStorageString)));
+	var multipartRequestBody =
+		delimiter +
+		'Content-Type: application/json\r\n\r\n' +
+		delimiter +
+		'Content-Type: ' + contentType + '\r\n' +
+		'Content-Transfer-Encoding: base64\r\n' +
+		'\r\n' +
+		base64Data +
+		close_delim;
+
+	var request = gapi.client.request({
+		'path': '/upload/drive/v2/files/' + fileId,
+		'method': 'PUT',
+		'params': {'uploadType': 'multipart', 'alt': 'json'},
+		'headers': {
+		'Content-Type': 'multipart/mixed; boundary="' + boundary + '"'
+		},
+		'body': multipartRequestBody});
+	if (!callback) {
+		callback = function(file) {
+			console.log(file)
+		};
+	}
+	request.execute(callback);
+  }
+///////////////////////////////
+
+function importFavMsgs(event) {
+	console.log(event.target.result);
+	var favMsgsImported = JSON.parse(event.target.result);
+	// TODO Validate this imported file to avoid
+	saveFavStorage(favMsgsImported);
+
+}
+//////////////
