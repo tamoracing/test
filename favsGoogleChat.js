@@ -173,7 +173,10 @@ function createImportFileButton() {
 	let buttonContainer = document.createElement('div');
 	buttonContainer.style = `
 		display: flex;
-		flew-direction: column;
+		height: 10vh;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
 	`;
 	let inputFile = document.createElement('input');
 	inputFile.type = 'file';
@@ -190,7 +193,6 @@ function createImportFileButton() {
 	labelFile.setAttribute('for', 'file-upload');
 	labelFile.id = 'import_fav_msgs';
 	labelFile.textContent = 'Para restaurar una copia de los mensajes destacados, tenés que importar el archivo json';
-	labelFile.style = buttonStyle;
 
 	buttonContainer.appendChild(labelFile);
 	buttonContainer.appendChild(inputFile);
