@@ -11,6 +11,7 @@ var ACTIONS_CONTAINER_JSNAME = "jpbBj";
 var ICON_SPAN_1_CLASS = "xjKiLb";
 var ICON_SVG_CLASS = "f8lxbf";
 var TEXT_INPUT_JSNAME = "g1zMPd";
+var DATE_CLASS = "b8Cb3d";
 var TEXT_PARENT_CONTAINER = "PjTrEc";
 var TEXT_PLACEHOLDER_JSNAME = "LT24l";
 var TEXT_PLACEHOLDER_HIDE_CLASS = "qs41qe";
@@ -52,6 +53,7 @@ var msgListStyle = `
 	border: 2px solid #ccc;
 	border-radius: 15px;
 	max-height: 35vh;
+	min-height: 20vh;
 	overflow-y: scroll;
 `;
 var buttonStyle = `
@@ -59,6 +61,9 @@ var buttonStyle = `
 	font-size: 14px;
 	line-height: 1.25rem;
 	letter-spacing: 0.25px;
+	background-color: white;
+	border: 1px solid rgb(218, 220, 224);
+	border-radius: 15px;
 `;
 var favMsgContainerStyle = `
 	display: flex;
@@ -75,43 +80,49 @@ var settingsContainerStyle = `
 	margin-left: 15px;
 	cursor:pointer;
 `;
+var overlayDivStyle = `
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0,0,0,0.5);
+	z-index: 2;
+	text-align: -webkit-center;
+	display: none
+`;
+var overlayContainerStyle = `
+	text-align: center;
+	margin-top: 27vh;
+	padding: 5vh;
+	background-color: white;
+	width: 55%;
+	max-height: 50%;
+	overflow: hidden;
+	border-radius: 20px;
+`;
 
 ///// MODAL //////
 const overlayDiv = document.createElement('div');
 let displayBool = false;
-overlayDiv.style.position = 'fixed';
-overlayDiv.style.width = '100%';
-overlayDiv.style.height = '100%';
-overlayDiv.style.top = '0';
-overlayDiv.style.left = '0';
-overlayDiv.style.right = '0';
-overlayDiv.style.bottom = '0';
-overlayDiv.style.backgroundColor = 'rgba(0,0,0,0.5)';
-overlayDiv.style.zIndex = '2';
-overlayDiv.style.textAlign = '-webkit-center';
-overlayDiv.style.display = "none";
+overlayDiv.style = overlayDivStyle;
 document.querySelector('body').appendChild(overlayDiv);
 
 function styleOverlay() {
   const contentContainer = document.querySelector('#container');
-  contentContainer.style.textAlign = 'center';   
-  contentContainer.style.marginTop = '27vh'; 
-  contentContainer.style.padding = '5vh';
-  contentContainer.style.backgroundColor = 'white'; 
-  contentContainer.style.width = '55%'; 
-  contentContainer.style.maxHeight = '50%';
-  contentContainer.style.overflow = 'hidden';
-  contentContainer.style.borderRadius = '20px';
+  contentContainer.style = overlayContainerStyle;
 }
 
 function displayOverlay(isSettingsView) {
-  if(displayBool) {
-	overlayDiv.innerHTML = ``;
-	overlayDiv.appendChild(createFavMsgContainer(isSettingsView));
-	styleOverlay();
-    overlayDiv.style.display = 'block';
-  } else {
-      overlayDiv.style.display = 'none';
+    if(displayBool) {
+		overlayDiv.innerHTML = ``;
+		overlayDiv.appendChild(createFavMsgContainer(isSettingsView));
+		styleOverlay();
+    	overlayDiv.style.display = 'block';
+  	} else {
+    	overlayDiv.style.display = 'none';
     }
 }
 
@@ -122,7 +133,8 @@ function createFavMsgContainer(isSettingsView) {
 	closeButton.textContent = 'Cerrar';
 	closeButton.id = 'modal-close-btn';
 	closeButton.style = buttonStyle;
-	closeButton.onclick = () => toogleModal();
+	closeButton.onclick = () => toggleModal();
+	
 	if (isSettingsView) {
 		modalContainer.appendChild(createFavMsgSettingsContainer());
 	} else {
@@ -138,7 +150,7 @@ function createFavMsgSettingsContainer() {
 	let importFileContainer;
 	// Check for the various File API support.
 	if (window.File && window.FileReader && window.FileList && window.Blob) {
-		importFileContainer = createImportFileButton();
+		importFileContainer = createImportFileButtonContainer();
     //document.getElementById('import_fav_msgs').addEventListener('change', onChange);
 	} else {
 		importFileContainer = document.createElement('div');
@@ -150,7 +162,7 @@ function createFavMsgSettingsContainer() {
 function createFavSettingsButtonContainer() {
 	let settingsContainer = document.createElement('div');
 	settingsContainer.appendChild(createFavSettingsButton());
-	settingsContainer.onclick = () => toogleModal(true);
+	settingsContainer.onclick = () => toggleModal(true);
 	settingsContainer.style = settingsContainerStyle;
 	// TODO onchange abrir el modal y mostrar el import file
 
@@ -158,48 +170,71 @@ function createFavSettingsButtonContainer() {
 }
 
 function createFavSettingsButton() {
+	let svgHTML = `
+	<path d="M13.9,22.5h-3.7c-0.7,0-1.4-0.5-1.4-1.3l-0.3-1.9c-0.3-0.1-0.5-0.3-0.8-0.5l-1.8,0.7c-0.7,0.3-1.5,0-1.8-0.6  
+		l-1.8-3.2c-0.4-0.7-0.2-1.4,0.4-1.9l1.5-1.2c0-0.1,0-0.3,0-0.5c0-0.1,0-0.3,0-0.5l-1.5-1.2C2,10.1,1.8,9.3,2.2,8.7l1.8-3.2  
+		c0.3-0.6,1.1-0.9,1.8-0.6l1.8,0.7c0.3-0.2,0.5-0.3,0.8-0.5l0.3-1.9C8.8,2.5,9.4,2,10.1,2h3.7c0.7,0,1.4,0.5,1.4,1.3l0.3,1.9  
+		c0.3,0.1,0.5,0.3,0.8,0.5l1.8-0.7c0.7-0.3,1.5,0,1.8,0.7l1.8,3.2c0.4,0.7,0.2,1.4-0.4,1.9l-1.5,1.2c0,0.1,0,0.3,0,0.5s0,0.3,0,0.5  
+		l1.5,1.2c0.6,0.4,0.7,1.2,0.4,1.9L20,19c-0.3,0.6-1.1,0.9-1.8,0.6l-1.8-0.7c-0.3,0.2-0.5,0.3-0.8,0.5l-0.3,1.9  
+		C15.2,22,14.6,22.5,13.9,22.5z M13.3,21L13.3,21L13.3,21z M10.7,20.9L10.7,20.9C10.7,21,10.7,21,10.7,20.9z M10.6,20.5h2.8l0.4-2.5  
+		l0.5-0.2c0.4-0.2,0.9-0.4,1.3-0.8l0.4-0.3l2.4,1l1.4-2.4l-2-1.6l0.1-0.6c0-0.3,0.1-0.5,0.1-0.8c0-0.3,0-0.5-0.1-0.8l-0.1-0.6l2-1.6  
+		l-1.4-2.4l-2.4,1l-0.4-0.3c-0.4-0.3-0.9-0.6-1.3-0.8l-0.5-0.2L13.4,4h-2.8l-0.4,2.5L9.7,6.8C9.3,6.9,8.8,7.2,8.4,7.5L7.9,7.9  
+		L5.6,6.9L4.2,9.3l2,1.6l-0.1,0.6c0,0.3-0.1,0.5-0.1,0.8s0,0.5,0.1,0.8l0.1,0.6l-2,1.6l1.4,2.4l2.4-1L8.4,17c0.4,0.3,0.9,0.6,1.3,0.8  
+		l0.5,0.2L10.6,20.5z M18.2,18C18.2,18,18.2,18,18.2,18L18.2,18z M5.8,18L5.8,18C5.8,18,5.8,18,5.8,18z M18.2,6.5  
+		C18.2,6.5,18.2,6.5,18.2,6.5L18.2,6.5z M5.8,6.5L5.8,6.5C5.8,6.5,5.8,6.5,5.8,6.5z M13.3,3.5L13.3,3.5L13.3,3.5z M12,8.7  
+		c-1.3,0-2.4,0.7-3,1.8c-0.6,1.1-0.6,2.4,0,3.5c0.6,1.1,1.8,1.8,3,1.8c1.9,0,3.5-1.6,3.5-3.5S13.9,8.7,12,8.7z" stroke="#5f6368" stroke-width="0.5">
+	</path>
+	`;
+
 	let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 	svg.setAttribute("viewBox", "0 0 24 24");
-	let path_1 = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-	path_1.setAttribute("d", "M13.9,22.5h-3.7c-0.7,0-1.4-0.5-1.4-1.3l-0.3-1.9c-0.3-0.1-0.5-0.3-0.8-0.5l-1.8,0.7c-0.7,0.3-1.5,0-1.8-0.6  l-1.8-3.2c-0.4-0.7-0.2-1.4,0.4-1.9l1.5-1.2c0-0.1,0-0.3,0-0.5c0-0.1,0-0.3,0-0.5l-1.5-1.2C2,10.1,1.8,9.3,2.2,8.7l1.8-3.2  c0.3-0.6,1.1-0.9,1.8-0.6l1.8,0.7c0.3-0.2,0.5-0.3,0.8-0.5l0.3-1.9C8.8,2.5,9.4,2,10.1,2h3.7c0.7,0,1.4,0.5,1.4,1.3l0.3,1.9  c0.3,0.1,0.5,0.3,0.8,0.5l1.8-0.7c0.7-0.3,1.5,0,1.8,0.7l1.8,3.2c0.4,0.7,0.2,1.4-0.4,1.9l-1.5,1.2c0,0.1,0,0.3,0,0.5s0,0.3,0,0.5  l1.5,1.2c0.6,0.4,0.7,1.2,0.4,1.9L20,19c-0.3,0.6-1.1,0.9-1.8,0.6l-1.8-0.7c-0.3,0.2-0.5,0.3-0.8,0.5l-0.3,1.9  C15.2,22,14.6,22.5,13.9,22.5z M13.3,21L13.3,21L13.3,21z M10.7,20.9L10.7,20.9C10.7,21,10.7,21,10.7,20.9z M10.6,20.5h2.8l0.4-2.5  l0.5-0.2c0.4-0.2,0.9-0.4,1.3-0.8l0.4-0.3l2.4,1l1.4-2.4l-2-1.6l0.1-0.6c0-0.3,0.1-0.5,0.1-0.8c0-0.3,0-0.5-0.1-0.8l-0.1-0.6l2-1.6  l-1.4-2.4l-2.4,1l-0.4-0.3c-0.4-0.3-0.9-0.6-1.3-0.8l-0.5-0.2L13.4,4h-2.8l-0.4,2.5L9.7,6.8C9.3,6.9,8.8,7.2,8.4,7.5L7.9,7.9  L5.6,6.9L4.2,9.3l2,1.6l-0.1,0.6c0,0.3-0.1,0.5-0.1,0.8s0,0.5,0.1,0.8l0.1,0.6l-2,1.6l1.4,2.4l2.4-1L8.4,17c0.4,0.3,0.9,0.6,1.3,0.8  l0.5,0.2L10.6,20.5z M18.2,18C18.2,18,18.2,18,18.2,18L18.2,18z M5.8,18L5.8,18C5.8,18,5.8,18,5.8,18z M18.2,6.5  C18.2,6.5,18.2,6.5,18.2,6.5L18.2,6.5z M5.8,6.5L5.8,6.5C5.8,6.5,5.8,6.5,5.8,6.5z M13.3,3.5L13.3,3.5L13.3,3.5z M12,8.7  c-1.3,0-2.4,0.7-3,1.8c-0.6,1.1-0.6,2.4,0,3.5c0.6,1.1,1.8,1.8,3,1.8c1.9,0,3.5-1.6,3.5-3.5S13.9,8.7,12,8.7z"); //Set path's data
-	path_1.setAttribute("stroke", "#5f6368");
-	path_1.setAttribute("stroke-width", "0.5");
-	svg.appendChild(path_1);
+	svg.innerHTML = svgHTML;
 	svg.classList.add(ICON_SVG_CLASS);
 	return svg;
 }
 
-function createImportFileButton() {
+function createImportFileButtonContainer() {
 	let buttonContainer = document.createElement('div');
 	buttonContainer.style = `
 		display: flex;
-		height: 10vh;
+		height: 30vh;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+		margin: 8px;
 	`;
 	let inputFile = document.createElement('input');
 	inputFile.type = 'file';
+	inputFile.accept = '.json';
 	inputFile.textContent = 'Importar archivo'
 	inputFile.classList.add('import-button');
 	inputFile.id = 'file-upload';
 	inputFile.onchange = (event) => {
 		var reader = new FileReader();
-		reader.onload = importFavMsgs;
+		reader.onload = importFavMsgsFromFile;
 		reader.readAsText(event.target.files[0]);
 	};
 	
 	let labelFile = document.createElement('label');
 	labelFile.setAttribute('for', 'file-upload');
 	labelFile.id = 'import_fav_msgs';
-	labelFile.textContent = 'Para restaurar una copia de los mensajes destacados, tenés que importar el archivo json';
+	labelFile.innerHTML = 'Para restaurar una copia de los mensajes destacados, tenés que importar el archivo <b>gchatFavMsgsBackup.json</b> que está en tu Google Drive';
+	labelFile.style = `
+		margin-bottom: 8px;
+	`;
+
+	let successContainer = document.createElement('div');
+	successContainer.id = 'file-upload-success';
+	successContainer.innerHTML = `✔️`;
+	successContainer.style.display = 'none';
 
 	buttonContainer.appendChild(labelFile);
 	buttonContainer.appendChild(inputFile);
+	buttonContainer.appendChild(successContainer);
 	return buttonContainer;
 }
 
-function toogleModal(isSettingsView) {
+function toggleModal(isSettingsView) {
   	displayBool = !displayBool;
    	displayOverlay(isSettingsView);
 }
@@ -214,7 +249,7 @@ function addFavMsgToContainer(container) {
         msgContainer.innerHTML = '<i><b>Aún no hay mensajes destacados en esta sala.</b></i>'
         msgList.appendChild(msgContainer);
     } else {
-		roomFavMsgs.sort(sortByDate).forEach((msg, index) => {
+		roomFavMsgs.forEach((msg, index) => {
 			let msgContainer = document.createElement('div');
 			msgContainer.style = favMsgContainerStyle;
 			let spanMsg = document.createElement('span');
@@ -228,7 +263,7 @@ function addFavMsgToContainer(container) {
 				msgContainer.remove();
 			}
 			actionsContainer.appendChild(removeButton);
-			spanMsg.innerHTML = `<b><i>${msg.author} ${msg.datetime}:</i></b><br>${msg.quotedText}`;
+			spanMsg.innerHTML = `<b>${msg.author}</b><span class='${DATE_CLASS}'> ${msg.datetime}:</span><br>${msg.quotedText}`;
 			msgContainer.appendChild(spanMsg);
 			msgContainer.appendChild(actionsContainer);
 			msgList.appendChild(msgContainer);
@@ -248,7 +283,7 @@ function createFavButton() {
     showFavMsgsButton.id = "fav-msg-button";
 	showFavMsgsButton.style = favMsgStyle;
 	showFavMsgsButton.innerHTML = "Destacados";
-	showFavMsgsButton.onclick = () => toogleModal();
+	showFavMsgsButton.onclick = () => toggleModal();
 	showFavMsgsButton.appendChild(createFavActionContainer());
 
 	let favButtonsContainer = document.createElement('div');
@@ -268,6 +303,7 @@ function initFav() {
 	addFavChangeConversationListener();
 	addFavNewMessagesListener();
 	createFavButton();
+	checkDriveStatus();
 }
 
 function getMessageActionsContainers() {
@@ -440,7 +476,9 @@ function getFavStorage() {
 }
 
 function saveFavStorage(favMsgs) {
-	localStorage.setItem('favMsgs', JSON.stringify(favMsgs));
+	let favMsgsJSON =  JSON.stringify(favMsgs);
+	localStorage.setItem('favMsgs', favMsgsJSON);
+	isInDrive ? updateFile(fileId, favMsgsJSON, setDriveInfo) : insertFile(favMsgsJSON, setDriveInfo);
 }
 
 function addFavMsg(msgObject) {
@@ -471,13 +509,40 @@ function getFavsForRoom(roomId) {
 	return favMsgs[roomId] || [];
 }
 
-function sortByDate(a, b) {
-	return (new Date(b.datetime).getTime() - new Date(a.datetime).getTime());
-}
-
 initFav();
 
 ////////google integration////////////
+/* global var to insert or update file in Drive */
+var isInDrive = false;
+var fileId = 0;
+
+function checkDriveStatus() {
+	getFileInfo().then((response) => {
+		if (response.result && response.result.files && response.result.files.length > 0) {
+			setDriveInfo(response.result.files[0]);
+		}
+	});
+}
+
+/**
+ * 
+ * @param {id: String, kind: String, mimeType: String, name: String} file 
+ */
+function setDriveInfo(file) {
+	fileId = file.id || 0;
+	isInDrive = !!file.id;
+}
+
+/// Validar si existe el archivo en el drive
+function getFileInfo() {
+	return gapi.client.request({
+		path: 'https://www.googleapis.com/drive/v3/files',
+		method: 'GET',
+		params: {
+			q: "name = 'gchatFavMsgsBackup.json'"
+		}
+	});
+}
 
 /// Crear archivo
 function insertFile(favStorageString, callback) {
@@ -486,7 +551,7 @@ function insertFile(favStorageString, callback) {
 	const close_delim = "\r\n--" + boundary + "--";
 	var contentType = 'application/json';
 	var metadata = {
-	'title': 'testFavStorage.json',
+	'title': 'gchatFavMsgsBackup.json',
 	'mimeType': contentType
 	};
 
@@ -559,11 +624,13 @@ function updateFile(fileId, favStorageString, callback) {
   }
 ///////////////////////////////
 
-function importFavMsgs(event) {
+function importFavMsgsFromFile(event) {
 	console.log(event.target.result);
 	var favMsgsImported = JSON.parse(event.target.result);
 	// TODO Validate this imported file to avoid
 	saveFavStorage(favMsgsImported);
+	document.getElementById('file-upload').style = 'display: none';
+	document.getElementById('file-upload-success').style = 'display: block';
 
 }
 //////////////
