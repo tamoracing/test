@@ -501,7 +501,8 @@ function updateMsgFoCurrentRoom(newMsgsList) {
 }
 
 function getCurrentRoomId() {
-	return document.URL.split('/')[4];
+	let urlParts =document.URL.split('/');
+	return urlParts[urlParts.length - 1];
 }
 
 function getFavsForRoom(roomId) {
