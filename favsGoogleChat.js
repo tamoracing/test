@@ -1,5 +1,7 @@
 javascript:
 
+// TODO se podría validar si el localStorage quedó por detrás del que está en el drive para evitar que se pise la info? Habría que avisar?
+
 var ACTION_CLASS_1 = "mUbCce";
 var ACTION_CLASS_2 = "orLAid";
 var FAV_ACTION_CLASS = "fav-container";
@@ -500,10 +502,16 @@ function updateMsgFoCurrentRoom(newMsgsList) {
 	}
 }
 
+// FIXME Esto no funciona cuando vas directamente a una conversación dentro de una sala, ejemplo: https://chat.google.com/room/AAAA6kReJvw/SenMM8XLZE0
+// en ese caso estoy obteniendo el ID de la conversación y no de la sala
 function getCurrentRoomId() {
-	let urlParts =document.URL.split('/');
-	return urlParts[urlParts.length - 1];
+	// Get relative path 
+	let relativePath = document.URL.split(/search\/|room\/|dm\//g)[1];
+	// Discard thread id if exists
+    let roomId = relativePath.split('/')[0];
+	return roomId;
 }
+
 
 function getFavsForRoom(roomId) {
 	let favMsgs = getFavStorage();
