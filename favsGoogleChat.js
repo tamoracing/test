@@ -1,7 +1,5 @@
 javascript:
 
-// TODO se podría validar si el localStorage quedó por detrás del que está en el drive para evitar que se pise la info? Habría que avisar?
-
 var ACTION_CLASS_1 = "mUbCce";
 var ACTION_CLASS_2 = "orLAid";
 var FAV_ACTION_CLASS = "fav-container";
