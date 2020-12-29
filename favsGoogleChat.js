@@ -20,6 +20,9 @@ var TEXT_PLACEHOLDER_HIDE_CLASS = "qs41qe";
 var AUTHOR_CONTAINER_JSNAME = "Ne3sFf";
 var TEXT_TO_REPLY_ELEMENT = "bgckF";
 var MSG_DATE_JSNAME = 'E53oB';
+
+// Style definitions ////////////////
+
 var favContainerStyle = `
 	font-family: "Google Sans", Arial, sans-serif;
 	color: rgb(60, 64, 67);
@@ -66,6 +69,7 @@ var buttonStyle = `
 	background-color: white;
 	border: 1px solid rgb(218, 220, 224);
 	border-radius: 15px;
+	padding: 2px 20px;
 `;
 var favMsgContainerStyle = `
 	display: flex;
@@ -105,6 +109,15 @@ var overlayContainerStyle = `
 	overflow: hidden;
 	border-radius: 20px;
 `;
+var importFileButtonContainerStyle = `
+	display: flex;
+	height: 30vh;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	margin: 8px;
+`;
+// End style definitions ///////////////
 
 ///// MODAL //////
 const overlayDiv = document.createElement('div');
@@ -117,10 +130,10 @@ function styleOverlay() {
   contentContainer.style = overlayContainerStyle;
 }
 
-function displayOverlay(isSettingsView) {
+function displayOverlay(content, closeBtnHandler) {
     if(displayBool) {
 		overlayDiv.innerHTML = ``;
-		overlayDiv.appendChild(createFavMsgContainer(isSettingsView));
+		overlayDiv.appendChild(createFavMsgContainer(content, closeBtnHandler));
 		styleOverlay();
     	overlayDiv.style.display = 'block';
   	} else {
@@ -128,20 +141,15 @@ function displayOverlay(isSettingsView) {
     }
 }
 
-function createFavMsgContainer(isSettingsView) {
+function createFavMsgContainer(content, closeBtnHandler) {
 	let modalContainer = document.createElement('div');
 	modalContainer.id = 'container';
 	let closeButton = document.createElement('button');
 	closeButton.textContent = 'Cerrar';
 	closeButton.id = 'modal-close-btn';
 	closeButton.style = buttonStyle;
-	closeButton.onclick = () => toggleModal();
-	
-	if (isSettingsView) {
-		modalContainer.appendChild(createFavMsgSettingsContainer());
-	} else {
-		addFavMsgToContainer(modalContainer);
-	}
+	closeButton.onclick = closeBtnHandler || (() => toggleModal());
+	modalContainer.appendChild(content);
 	let actionsContainer = document.createElement('div');
 	actionsContainer.appendChild(closeButton);
 	modalContainer.appendChild(actionsContainer);
@@ -164,10 +172,9 @@ function createFavMsgSettingsContainer() {
 function createFavSettingsButtonContainer() {
 	let settingsContainer = document.createElement('div');
 	settingsContainer.appendChild(createFavSettingsButton());
-	settingsContainer.onclick = () => toggleModal(true);
+	let settingsContent = createFavMsgSettingsContainer();
+	settingsContainer.onclick = () => toggleModal(settingsContent);
 	settingsContainer.style = settingsContainerStyle;
-	// TODO onchange abrir el modal y mostrar el import file
-
 	return settingsContainer;
 }
 
@@ -197,14 +204,7 @@ function createFavSettingsButton() {
 
 function createImportFileButtonContainer() {
 	let buttonContainer = document.createElement('div');
-	buttonContainer.style = `
-		display: flex;
-		height: 30vh;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		margin: 8px;
-	`;
+	buttonContainer.style = importFileButtonContainerStyle;
 	let inputFile = document.createElement('input');
 	inputFile.type = 'file';
 	inputFile.accept = '.json';
@@ -236,22 +236,27 @@ function createImportFileButtonContainer() {
 	return buttonContainer;
 }
 
-function toggleModal(isSettingsView) {
-  	displayBool = !displayBool;
-   	displayOverlay(isSettingsView);
+function toggleModal(content, closeBtnHandler) {
+	displayBool = !displayBool;
+	displayOverlay(content, closeBtnHandler);
 }
 
-function addFavMsgToContainer(container) {
-	let msgList = document.createElement('div');
-	msgList.style = msgListStyle;
-    let roomFavMsgs = getFavsForRoom(getCurrentRoomId());
-    if (roomFavMsgs.length === 0) {
+function addFavMsgToContainer() {
+	let msgListContainer = document.createElement('div');
+	msgListContainer.style = msgListStyle;
+	let roomFavMsgs = getFavsForRoom(getCurrentRoomId());
+	appendMessages(roomFavMsgs, msgListContainer);
+	return msgListContainer;
+}
+
+function appendMessages(messages, container) {
+	if (messages.length === 0) {
         let msgContainer = document.createElement('div');
         msgContainer.style = favMsgContainerStyle;
         msgContainer.innerHTML = '<i><b>Aún no hay mensajes destacados en esta sala.</b></i>'
-        msgList.appendChild(msgContainer);
+        container.appendChild(msgContainer);
     } else {
-		roomFavMsgs.forEach((msg, index) => {
+		messages.forEach((msg, index) => {
 			let msgContainer = document.createElement('div');
 			msgContainer.style = favMsgContainerStyle;
 			let spanMsg = document.createElement('span');
@@ -260,19 +265,17 @@ function addFavMsgToContainer(container) {
 			removeButton.style = buttonStyle;
 			removeButton.textContent = 'Quitar';
 			removeButton.onclick = () => {
-				roomFavMsgs[index] = null;
-				updateMsgFoCurrentRoom(roomFavMsgs);
+				messages[index] = null;
+				updateMsgForCurrentRoom(messages);
 				msgContainer.remove();
 			}
 			actionsContainer.appendChild(removeButton);
 			spanMsg.innerHTML = `<b>${msg.author}</b><span class='${DATE_CLASS}'> ${msg.datetime}:</span><br>${msg.quotedText}`;
 			msgContainer.appendChild(spanMsg);
 			msgContainer.appendChild(actionsContainer);
-			msgList.appendChild(msgContainer);
+			container.appendChild(msgContainer);
 		});
 	}
-	
-	container.appendChild(msgList);
 }
 /////
 
@@ -285,7 +288,9 @@ function createFavButton() {
     showFavMsgsButton.id = "fav-msg-button";
 	showFavMsgsButton.style = favMsgStyle;
 	showFavMsgsButton.innerHTML = "Destacados";
-	showFavMsgsButton.onclick = () => toggleModal();
+	showFavMsgsButton.onclick = () => {
+		let msgContent = addFavMsgToContainer();
+		toggleModal(msgContent)};
 	showFavMsgsButton.appendChild(createFavActionContainer());
 
 	let favButtonsContainer = document.createElement('div');
@@ -306,6 +311,7 @@ function initFav() {
 	addFavNewMessagesListener();
 	createFavButton();
 	checkDriveStatus();
+	checkFirstTimeLoad();
 }
 
 function getMessageActionsContainers() {
@@ -477,7 +483,10 @@ function getFavStorage() {
     return localStorage.getItem('favMsgs')  ? JSON.parse(localStorage.getItem('favMsgs')) : {};
 }
 
-function saveFavStorage(favMsgs) {
+function saveFavStorage(favMsgs, skipUpdateTimestamp) {
+	if (!skipUpdateTimestamp) {
+		favMsgs.timestamp = Date.now();
+	}
 	let favMsgsJSON =  JSON.stringify(favMsgs);
 	localStorage.setItem('favMsgs', favMsgsJSON);
 	isInDrive ? updateFile(fileId, favMsgsJSON, setDriveInfo) : insertFile(favMsgsJSON, setDriveInfo);
@@ -490,7 +499,7 @@ function addFavMsg(msgObject) {
     saveFavStorage(favMsgs);
 }
 
-function updateMsgFoCurrentRoom(newMsgsList) {
+function updateMsgForCurrentRoom(newMsgsList) {
 	newMsgsList = newMsgsList.filter((msg) => {return !!msg});
 	let roomId = getCurrentRoomId();
 	let favMsgs = getFavStorage();
@@ -502,8 +511,6 @@ function updateMsgFoCurrentRoom(newMsgsList) {
 	}
 }
 
-// FIXME Esto no funciona cuando vas directamente a una conversación dentro de una sala, ejemplo: https://chat.google.com/room/AAAA6kReJvw/SenMM8XLZE0
-// en ese caso estoy obteniendo el ID de la conversación y no de la sala
 function getCurrentRoomId() {
 	// Get relative path 
 	let relativePath = document.URL.split(/search\/|room\/|dm\//g)[1];
@@ -516,6 +523,45 @@ function getCurrentRoomId() {
 function getFavsForRoom(roomId) {
 	let favMsgs = getFavStorage();
 	return favMsgs[roomId] || [];
+}
+
+function checkFirstTimeLoad() {
+	let favStorage = getFavStorage();
+	if (!favStorage.hideWarning) {
+		openNoStorageWarning();
+	}
+}
+
+function openNoStorageWarning() {
+	let warningContainerTemplate = `
+		<h1 style="font-family:'Google Sans', Arial, sans-serif;color: rgb(60, 64, 67);font-size: 1.25rem;font-weight: 500;color: #5f6368;">No hay mensajes destacados aún, puede que necesites importar la copia de respaldo</h1>
+		<div style="display: flex;flex-direction:column;padding: 15px; text-align:left">
+			<span style="margin: 10px 0px">
+				<p style="font-family:'Google Sans', Arial, sans-serif;color: rgb(60, 64, 67);font-size: 15px;line-height: 1.25rem;letter-spacing: 0.25px;">
+					No hay información de mensajes destacados en este navegador, si ya usaste los mensajes destacados anteriormente te sugerimos importar la copia de respaldo haciendo click en el ícono de configuraciones de Destacados
+				</p>
+			</span>
+			<div style="font-family:'Google Sans', Arial, sans-serif;color: rgb(60, 64, 67);font-size: 15px">
+				<input id="hide-warning" type="checkbox" checked>No volver a mostrar este mensaje en este navegador</input>
+			</div>
+		</div>
+	`;
+	let warningContainer = document.createElement('div');
+	warningContainer.innerHTML = warningContainerTemplate;
+	warningContainer.style = `
+		display:flex;
+		flex-direction: column;
+		padding: 10px;
+	`;
+	toggleModal(warningContainer, closeWarningHandler);
+}
+
+function closeWarningHandler() {
+	let hideWarningEl = document.getElementById("hide-warning");
+	let favStorage = getFavStorage();
+	favStorage.hideWarning = hideWarningEl.checked;
+	saveFavStorage(favStorage);
+	toggleModal();
 }
 
 initFav();
@@ -534,7 +580,6 @@ function checkDriveStatus() {
 }
 
 /**
- * 
  * @param {id: String, kind: String, mimeType: String, name: String} file 
  */
 function setDriveInfo(file) {
@@ -636,8 +681,7 @@ function updateFile(fileId, favStorageString, callback) {
 function importFavMsgsFromFile(event) {
 	console.log(event.target.result);
 	var favMsgsImported = JSON.parse(event.target.result);
-	// TODO Validate this imported file to avoid
-	saveFavStorage(favMsgsImported);
+	saveFavStorage(favMsgsImported, true);
 	document.getElementById('file-upload').style = 'display: none';
 	document.getElementById('file-upload-success').style = 'display: block';
 
