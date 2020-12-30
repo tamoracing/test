@@ -407,7 +407,7 @@ function createFavButton() {
 }
 /////
 
-
+// TODO check if imported file is older to localStorage and display confirmation action
 function importFavMsgsFromFile(event) {
 	console.log(event.target.result);
 	var favMsgsImported = JSON.parse(event.target.result);
