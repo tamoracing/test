@@ -1,6 +1,6 @@
 javascript:
 
-var scriptV = "v2.0.0";
+var scriptV = "v1.1.1";
 var FAV_ACTION_CLASS = "fav-container";
 var DATE_CLASS = "b8Cb3d";
 var MSG_DATE_JSNAME = 'E53oB';
@@ -144,7 +144,7 @@ function saveFavStorage(favMsgs, skipUpdateTimestamp) {
 	}
 	let favMsgsJSON =  JSON.stringify(favMsgs);
 	localStorage.setItem('favMsgs', favMsgsJSON);
-	if (saveBackUpOnDrive) {
+	if (!favMsgs.notSaveOnDrive) {
 		isInDrive ? updateFile(fileId, favMsgsJSON, setDriveInfo) : insertFile(favMsgsJSON, setDriveInfo);
 	}
 }
@@ -189,6 +189,14 @@ function checkFirstTimeLoad() {
 	}
 }
 
+function checkSaveOnDrive() {
+	let favStorage = getFavStorage();
+	if (favStorage.notSaveOnDrive === undefined) {
+		favStorage.notSaveOnDrive = false;
+		saveFavStorage(favStorage);
+	}
+}
+
 function openNoStorageWarning() {
 	let warningContainerTemplate = `
 		<h1 style="font-family:'Google Sans', Arial, sans-serif;color: rgb(60, 64, 67);font-size: 1.25rem;font-weight: 500;color: #5f6368;">No hay mensajes destacados aún, puede que necesites importar la copia de respaldo</h1>
@@ -196,6 +204,9 @@ function openNoStorageWarning() {
 			<span style="margin: 10px 0px">
 				<p style="font-family:'Google Sans', Arial, sans-serif;color: rgb(60, 64, 67);font-size: 15px;line-height: 1.25rem;letter-spacing: 0.25px;">
 					No hay información de mensajes destacados en este navegador, si ya usaste los mensajes destacados anteriormente te sugerimos importar la copia de respaldo haciendo click en el ícono de configuraciones de Destacados
+				</p>
+				<p style="font-family:'Google Sans', Arial, sans-serif;color: rgb(60, 64, 67);font-size: 15px;line-height: 1.25rem;letter-spacing: 0.25px;">
+					Por defecto se crea una copia de respaldo en GoogleDrive. Esta opción se puede desactivar haciendo click en el ícono de configuraciones de Destacados.
 				</p>
 			</span>
 			<div style="font-family:'Google Sans', Arial, sans-serif;color: rgb(60, 64, 67);font-size: 15px">
@@ -316,7 +327,7 @@ function createSettingsContainer() {
 				<div id="file-upload-success" style="display: none;">✔️</div>
 			</div>
 			<div style="font-family:'Google Sans', Arial, sans-serif;color: rgb(60, 64, 67);font-size: 15px; height:100%">
-				<input id="save-on-drive" type="checkbox">No guardar copia de respaldo en Google Drive</input>
+				<input id="not-save-on-drive" type="checkbox">No guardar copia de respaldo en Google Drive</input>
 			</div>
 		</div>
 	`;
@@ -328,12 +339,13 @@ function createSettingsContainer() {
 		flex-direction: column;
 		padding: 10px;
 	`;
+	warningContainer.querySelector('#not-save-on-drive').checked = getFavStorage().notSaveOnDrive;
 	return warningContainer;
 }
 
 function setFavSettingsHandlers() {
 	document.getElementById("file-upload").onchange = importFile;
-	document.getElementById("save-on-drive").onchange = updateSaveOnDrive;
+	document.getElementById("not-save-on-drive").onchange = updateSaveOnDrive;
 }
 
 function importFile(event) {
@@ -343,8 +355,10 @@ function importFile(event) {
 };
 
 function updateSaveOnDrive(event) {
-	let saveOnDrive = document.getElementById("save-on-drive");
-	saveBackUpOnDrive = saveOnDrive.checked;
+	let notSaveOnDriveInput = document.getElementById("not-save-on-drive");
+	let favStorage = getFavStorage();
+	favStorage.notSaveOnDrive = notSaveOnDriveInput.checked;
+	saveFavStorage(favStorage);
 }
 
 function toggleModal(content, closeBtnHandler) {
@@ -549,7 +563,8 @@ function init() {
     actionContainers.fav.forEach(addFavActionToActionContainer);
 	addChangeConversationListener();
     addNewMessagesListener();
-    createFavButton();
+	createFavButton();
+	checkSaveOnDrive();
 	checkDriveStatus();
 	checkFirstTimeLoad();
 	console.log(`Done :) ${scriptV}`);
