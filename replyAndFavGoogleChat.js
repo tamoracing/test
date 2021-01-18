@@ -144,7 +144,9 @@ function saveFavStorage(favMsgs, skipUpdateTimestamp) {
 	}
 	let favMsgsJSON =  JSON.stringify(favMsgs);
 	localStorage.setItem('favMsgs', favMsgsJSON);
-	isInDrive ? updateFile(fileId, favMsgsJSON, setDriveInfo) : insertFile(favMsgsJSON, setDriveInfo);
+	if (saveBackUpOnDrive) {
+		isInDrive ? updateFile(fileId, favMsgsJSON, setDriveInfo) : insertFile(favMsgsJSON, setDriveInfo);
+	}
 }
 
 function addFavMsg(msgObject) {
@@ -260,8 +262,7 @@ function createFavMsgSettingsContainer() {
 	let importFileContainer;
 	// Check for the various File API support.
 	if (window.File && window.FileReader && window.FileList && window.Blob) {
-		importFileContainer = createImportFileButtonContainer();
-    //document.getElementById('import_fav_msgs').addEventListener('change', onChange);
+		importFileContainer = createSettingsContainer();
 	} else {
 		importFileContainer = document.createElement('div');
 		importFileContainer.innerText = 'El browser no soporta la API para cargar archivos';
@@ -273,7 +274,10 @@ function createFavSettingsButtonContainer() {
 	let settingsContainer = document.createElement('div');
 	settingsContainer.appendChild(createFavSettingsButton());
 	let settingsContent = createFavMsgSettingsContainer();
-	settingsContainer.onclick = () => toggleModal(settingsContent);
+	settingsContainer.onclick = () => {
+		toggleModal(settingsContent);
+		setFavSettingsHandlers();
+	}
 	settingsContainer.style = settingsContainerStyle;
 	return settingsContainer;
 }
@@ -302,38 +306,45 @@ function createFavSettingsButton() {
 	return svg;
 }
 
-function createImportFileButtonContainer() {
-	let buttonContainer = document.createElement('div');
-	buttonContainer.style = importFileButtonContainerStyle;
-	let inputFile = document.createElement('input');
-	inputFile.type = 'file';
-	inputFile.accept = '.json';
-	inputFile.textContent = 'Importar archivo'
-	inputFile.classList.add('import-button');
-	inputFile.id = 'file-upload';
-	inputFile.onchange = (event) => {
-		var reader = new FileReader();
-		reader.onload = importFavMsgsFromFile;
-		reader.readAsText(event.target.files[0]);
-	};
-	
-	let labelFile = document.createElement('label');
-	labelFile.setAttribute('for', 'file-upload');
-	labelFile.id = 'import_fav_msgs';
-	labelFile.innerHTML = 'Para restaurar una copia de los mensajes destacados, tenés que importar el archivo <b>gchatFavMsgsBackup.json</b> que está en tu Google Drive';
-	labelFile.style = `
-		margin-bottom: 8px;
+function createSettingsContainer() {
+	let warningContainerTemplate = `
+		<h1 style="font-family:'Google Sans', Arial, sans-serif;color: rgb(60, 64, 67);font-size: 1.25rem;font-weight: 500;color: #5f6368;">Configuración mensajes destacados</h1>
+		<div style="display: flex;flex-direction:column;padding: 15px; text-align:left">
+			<div style="font-family:'Google Sans', Arial, sans-serif;color: rgb(60, 64, 67);font-size: 15px;line-height: 1.25rem;letter-spacing: 0.25px; height:100%; margin-bottom: 10px">
+				<label for="file-upload" id="import_fav_msgs" style="margin-bottom: 8px;">Para restaurar una copia de los mensajes destacados, tenés que importar el archivo <b>gchatFavMsgsBackup.json</b> que está en tu Google Drive</label>
+				<input style="margin-top: 8px" type="file" accept=".json" class="import-button" id="file-upload"></input>
+				<div id="file-upload-success" style="display: none;">✔️</div>
+			</div>
+			<div style="font-family:'Google Sans', Arial, sans-serif;color: rgb(60, 64, 67);font-size: 15px; height:100%">
+				<input id="save-on-drive" type="checkbox">No guardar copia de respaldo en Google Drive</input>
+			</div>
+		</div>
 	`;
+	
+	let warningContainer = document.createElement('div');
+	warningContainer.innerHTML = warningContainerTemplate;
+	warningContainer.style = `
+		display:flex;
+		flex-direction: column;
+		padding: 10px;
+	`;
+	return warningContainer;
+}
 
-	let successContainer = document.createElement('div');
-	successContainer.id = 'file-upload-success';
-	successContainer.innerHTML = `✔️`;
-	successContainer.style.display = 'none';
+function setFavSettingsHandlers() {
+	document.getElementById("file-upload").onchange = importFile;
+	document.getElementById("save-on-drive").onchange = updateSaveOnDrive;
+}
 
-	buttonContainer.appendChild(labelFile);
-	buttonContainer.appendChild(inputFile);
-	buttonContainer.appendChild(successContainer);
-	return buttonContainer;
+function importFile(event) {
+	var reader = new FileReader();
+	reader.onload = importFavMsgsFromFile;
+	reader.readAsText(event.target.files[0]);
+};
+
+function updateSaveOnDrive(event) {
+	let saveOnDrive = document.getElementById("save-on-drive");
+	saveBackUpOnDrive = saveOnDrive.checked;
 }
 
 function toggleModal(content, closeBtnHandler) {
@@ -420,6 +431,7 @@ function importFavMsgsFromFile(event) {
 ////////google integration////////////
 /* global var to insert or update file in Drive */
 var isInDrive = false;
+var saveBackUpOnDrive = true;
 var fileId = 0;
 
 function checkDriveStatus() {
